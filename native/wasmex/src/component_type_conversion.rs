@@ -115,6 +115,24 @@ pub fn val_to_term<'a>(val: &Val, env: rustler::Env<'a>) -> Term<'a> {
             Some(boxed_val) => val_to_term(boxed_val, env),
             None => nil().encode(env),
         },
+        Val::Result(res) => {
+            let ok: Term = if res.is_ok() {
+                atoms::ok()
+            } else {
+                atoms::error()
+            }
+            .encode(env);
+
+            let val = match res {
+                Ok(Some(val)) => val.clone(),
+                Err(Some(val)) => val.clone(),
+                _ => return String::from("wut").encode(env),
+            };
+            let val = val_to_term(val.as_ref(), env);
+
+            make_tuple(env, &[ok, val])
+        }
+
         _ => String::from("wut").encode(env),
     }
 }
